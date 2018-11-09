@@ -198,6 +198,65 @@ exports.unpublishAndUnsubscribe = (test) => {
   });
 }
 
+exports.updateMedia = (test) => {
+  var server = new mcs.Server({port: _port});
+  var client = new mcs('ws://' + _host + ':' + _port++);
+
+  setTimeout(() => {
+    test.ok(false,'Server timeout');
+    client.closeConnection();
+    server.closeConnection();
+    test.done();
+  }, _timeout);
+
+  server.on('connection', (rclient) => {
+    rclient.on('updateMedia', () => {
+      test.ok(true,'updateMedia is working');
+      client.closeConnection();
+      server.closeConnection();
+      test.done();
+    })
+  });
+
+  client.on('open', () => {
+    client.updateMedia("UnIqUe_Id", {descriptor: 'SDP1'});
+  });
+}
+
+exports.updateMediaMediaUpdated = (test) => {
+  var server = new mcs.Server({port: _port});
+  var client = new mcs('ws://' + _host + ':' + _port++);
+
+  setTimeout(() => {
+    test.ok(false,'Server timeout');
+    client.closeConnection();
+    server.closeConnection();
+    test.done();
+  }, _timeout);
+
+  server.on('connection', (rclient) => {
+    rclient.on('updateMedia', (args) => {
+      test.equals(args.media_id, 'MEDIA_1', 'UpdateMedia media_id is working');
+      test.equals(
+        args.params.descriptor,
+        'SDP1', 'UpdateMedia params is working'
+      );
+      rclient.mediaUpdated('UnIqUe_Id');
+    })
+  });
+
+  client.on('open', () => {
+    client.on('mediaUpdated', (args) => {
+      test.notEqual(args, null, 'MediaUpdated\'s args working');
+      test.equal(args.media_id, 'UnIqUe_Id', 'MediaUpdated\'s media_id');
+      client.closeConnection();
+      server.closeConnection();
+      test.done();
+    });
+    client.updateMedia('MEDIA_1', {descriptor: 'SDP1'});
+  });
+}
+
 exports.joinArgs = function (test) {
   var server = new mcs.Server({port: _port});
   var client = new mcs('ws://' + _host + ':' + _port++);
