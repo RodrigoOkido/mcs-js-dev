@@ -34,13 +34,15 @@ exports.disconnect = function (test) {
     test.done();
   }, _timeout);
 
-  client.on('open', () => {
-    client.on('close', () => {
-      test.ok(true, 'User disconnected!')
+  server.on('connection', (rclient) => {
+    rclient.on('close', () => {
       server.closeConnection();
+      test.ok(true, 'User disconnected!');
       test.done();
     });
+  });
 
+  client.on('open', () => {
     client.closeConnection();
   });
 }
@@ -56,13 +58,14 @@ exports.disconnected = (test) => {
     test.done();
   }, _timeout);
 
-  server.on('connection', () => {
-    server.closeConnection();
+  server.on('connection', (rclient) => {
+    rclient.closeConnection();
   });
 
   client.on('close', () => {
-    test.ok(true, 'Server disconnected!')
     client.closeConnection();
+    server.closeConnection();
+    test.ok(true, 'Server disconnected!')
     test.done();
   });
 
